@@ -1,0 +1,12 @@
+ NutriSaúde
+
+Sistema profissional desenvolvido em Python com interface web moderna e interativa. Funciona totalmente integrado: **a interface só abre e funciona se o servidor Python estiver ativo**.
+
+ Funcionalidades:
+• Cadastro de usuário com dados pessoais e objetivo (emagrecer, ganhar massa, controle de doenças)
+• Cálculos automáticos: IMC, Taxa Metabólica Basal (TMB), meta calórica diária e proteína ideal
+• Registro completo de refeições e acompanhamento diário
+• Assistente Nutricional IA integrado: responde dúvidas, dá dicas e orientações para diabetes, hipertensão, dieta e receitas
+• Visualização clara de todos os dados e resultados calculados pelo sistema Python
+
+Ideal para acompanhamento nutricional pessoal ou profissional, 100% funcional, seguro e conectado.
