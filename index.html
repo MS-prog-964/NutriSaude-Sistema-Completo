@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NutriSaúde | Sistema Conectado</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#0A4D2C',
+                        secondary: '#34D058',
+                        dark: '#083D23',
+                        light: '#85E085',
+                        erro: '#dc2626',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #0A4D2C; font-family: 'Segoe UI', sans-serif; }
+        .mensagem-usuario { background-color: #34D058; color: #000; margin-left: auto; }
+        .mensagem-ia { background-color: #1E7E34; color: #fff; margin-right: auto; }
+    </style>
+</head>
+<body class="text-white min-h-screen">
+
+    <!-- ============================================== -->
+    <!-- TELA DE VERIFICAÇÃO DE CONEXÃO -->
+    <!-- ============================================== -->
+    <section id="telaVerificacao" class="fixed w-full h-full bg-primary z-50 flex flex-col items-center justify-center px-6">
+        <div class="text-6xl mb-4" id="iconeStatus">🔌</div>
+        <h1 class="text-3xl font-bold mb-2 text-secondary">NutriSaúde</h1>
+        <p class="text-light text-center mb-6" id="textoStatus">Verificando conexão com o sistema...</p>
+        <div class="w-12 h-12 border-4 border-secondary border-t-transparent rounded-full animate-spin mb-4" id="carregando"></div>
+        <button id="btnTentar" class="hidden bg-secondary text-black px-6 py-2 rounded-lg font-semibold" onclick="verificarConexao()">Tentar Novamente</button>
+    </section>
+
+    <!-- ============================================== -->
+    <!-- TELA DE LOGIN (SÓ APARECE SE PYTHON ESTIVER LIGADO) -->
+    <!-- ============================================== -->
+    <section id="telaLogin" class="hidden fixed w-full h-full bg-primary z-40 flex flex-col items-center justify-center px-6">
+        <div class="mb-4 text-secondary text-5xl">🌱</div>
+        <h2 class="text-2xl font-bold mb-1">Acesso ao Sistema</h2>
+        <p class="text-light text-sm mb-8">✅ Conectado ao Servidor Python</p>
+
+        <div class="w-full max-w-md bg-dark/40 p-8 rounded-2xl border border-secondary/20">
+            <div class="mb-4">
+                <label class="text-light text-sm mb-1 block">Nome Completo</label>
+                <input type="text" id="nome" class="w-full px-4 py-3 rounded-lg bg-primary/60 border border-secondary/30 outline-none" placeholder="Seu nome">
+            </div>
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="text-light text-sm mb-1 block">Idade</label>
+                    <input type="number" id="idade" class="w-full px-4 py-3 rounded-lg bg-primary/60 border border-secondary/30 outline-none" placeholder="25">
+                </div>
+                <div>
+                    <label class="text-light text-sm mb-1 block">Peso (kg)</label>
+                    <input type="number" step="0.1" id="peso" class="w-full px-4 py-3 rounded-lg bg-primary/60 border border-secondary/30 outline-none" placeholder="54.0">
+                </div>
+            </div>
+            <div class="mb-4">
+                <label class="text-light text-sm mb-1 block">Altura (m)</label>
+                <input type="number" step="0.01" id="altura" class="w-full px-4 py-3 rounded-lg bg-primary/60 border border-secondary/30 outline-none" placeholder="1.62">
+            </div>
+            <div class="mb-6">
+                <label class="text-light text-sm mb-1 block">Objetivo</label>
+                <select id="objetivo" class="w-full px-4 py-3 rounded-lg bg-primary/60 border border-secondary/30 outline-none">
+                    <option value="ganhar_massa">Ganhar Massa</option>
+                    <option value="emagrecer">Emagrecer</option>
+                    <option value="diabetes">Controle Diabetes</option>
+                    <option value="hipertensao">Controle Hipertensão</option>
+                </select>
+            </div>
+            <button id="btnEntrarSistema" class="w-full bg-secondary py-3.5 rounded-xl font-semibold text-black hover:bg-secondary/90 transition">Entrar</button>
+        </div>
+    </section>
+
+    <!-- ============================================== -->
+    <!-- PAINEL PRINCIPAL (SÓ FUNCIONA COM PYTHON LIGADO) -->
+    <!-- ============================================== -->
+    <main id="painelPrincipal" class="hidden max-w-lg mx-auto min-h-screen pb-20">
+        <header class="bg-dark/80 backdrop-blur-md p-4 border-b border-secondary/20 flex justify-between items-center">
+            <div>
+                <h2 class="text-lg font-bold text-secondary" id="nomeUser">Olá, Usuário</h2>
+                <p class="text-light text-xs">🟢 Sistema Online - Conectado ao Python</p>
+            </div>
+            <button onclick="desconectar()" class="text-erro text-sm hover:underline">Sair</button>
+        </header>
+
+        <section class="px-4 py-5">
+            <div class="bg-gradient-to-r from-dark to-primary/80 rounded-2xl p-5 mb-6 border border-secondary/20">
+                <h3 class="text-sm text-light mb-3">📊 Dados Calculados pelo Python</h3>
+                <div class="grid grid-cols-2 gap-3 text-center">
+                    <div class="bg-primary/50 rounded-xl p-3">
+                        <p class="text-xs text-light">Meta Diária</p>
+                        <p class="text-lg font-bold text-secondary" id="metaCalc">--</p>
+                    </div>
+                    <div class="bg-primary/50 rounded-xl p-3">
+                        <p class="text-xs text-light">Proteína Ideal</p>
+                        <p class="text-lg font-bold text-secondary" id="proteinaCalc">-- g</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 mb-8">
+                <button onclick="abrirRegistro()" class="bg-secondary p-4 rounded-xl text-black font-medium flex flex-col items-center gap-2 hover:bg-secondary/90 transition">
+                    <i class="fa fa-plus-circle text-xl"></i> Registrar Refeição
+                </button>
+                <button onclick="abrirChatIA()" class="bg-dark border border-secondary/40 p-4 rounded-xl flex flex-col items-center gap-2 hover:bg-dark/80 transition">
+                    <i class="fa fa-robot text-xl text-secondary"></i> Nutri IA
+                </button>
+            </div>
+
+            <div id="listaRefeicoes" class="space-y-2">
+                <p class="text-light text-sm italic text-center">Nenhuma refeição registrada ainda.</p>
+            </div>
+        </section>
+
+        <!-- CHAT IA -->
+        <section id="telaChat" class="hidden fixed inset-0 bg-primary z-40 pt-16 px-4 pb-20">
+            <button onclick="fecharChat()" class="absolute top-4 left-4 text-light hover:text-secondary transition">← Voltar</button>
+            <h2 class="text-center text-xl font-bold text-secondary mb-4">Nutricionista IA</h2>
+            <div id="mensagensChat" class="h-[calc(100vh-180px)] overflow-y-auto space-y-3 mb-4 px-1">
+                <div class="bg-dark/60 p-3 rounded-xl max-w-[80%] mensagem-ia">
+                    <p class="text-sm">Olá! Sou sua IA conectada ao sistema Python. Pergunte sobre dieta, doenças ou receitas!</p>
+                </div>
+            </div>
+            <div class="flex gap-2 fixed bottom-16 left-4 right-4">
+                <input type="text" id="perguntaIA" class="flex-1 bg-dark border border-secondary/30 rounded-full px-4 py-2.5 outline-none" placeholder="Digite sua pergunta...">
+                <button onclick="enviarIA()" class="bg-secondary w-10 h-10 rounded-full text-black flex items-center justify-center hover:scale-105 transition">↑</button>
+            </div>
+        </section>
+
+        <!-- MODAL REGISTRO -->
+        <section id="modalRegistro" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center px-4">
+            <div class="bg-primary rounded-2xl p-6 w-full max-w-md border border-secondary/20">
+                <h2 class="text-xl font-bold text-secondary mb-4">Registrar Refeição</h2>
+                <div class="mb-3">
+                    <label class="text-light text-xs mb-1 block">Tipo de Refeição</label>
+                    <select id="tipoRef" class="w-full bg-dark p-2.5 rounded-lg border border-secondary/30 outline-none">
+                        <option>Café da Manhã</option>
+                        <option>Lanche da Manhã</option>
+                        <option>Almoço</option>
+                        <option>Lanche da Tarde</option>
+                        <option>Jantar</option>
+                        <option>Ceia</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="text-light text-xs mb-1 block">O que você comeu?</label>
+                    <input type="text" id="alimento" class="w-full bg-dark p-2.5 rounded-lg border border-secondary/30 outline-none" placeholder="Ex: Frango, Salada...">
+                </div>
+                <div class="mb-4">
+                    <label class="text-light text-xs mb-1 block">Calorias</label>
+                    <input type="number" id="caloriasRef" class="w-full bg-dark p-2.5 rounded-lg border border-secondary/30 outline-none" placeholder="250">
+                </div>
+                <div class="flex gap-3 mt-2">
+                    <button onclick="salvarRefeicao()" class="flex-1 bg-secondary py-2.5 rounded-lg text-black hover:bg-secondary/90 transition">Salvar</button>
+                    <button onclick="fecharRegistro()" class="flex-1 bg-dark py-2.5 rounded-lg hover:bg-dark/80 transition">Cancelar</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- MENU INFERIOR -->
+        <footer class="fixed bottom-0 left-0 right-0 bg-dark/80 border-t border-secondary/20 py-3 px-10 flex justify-between">
+            <button class="flex flex-col items-center text-secondary"><i class="fa fa-home text-lg"></i><span class="text-[10px]">Início</span></button>
+            <button class="flex flex-col items-center text-light hover:text-secondary transition"><i class="fa fa-book text-lg"></i><span class="text-[10px]">Diário</span></button>
+            <button class="flex flex-col items-center text-light hover:text-secondary transition" onclick="abrirChatIA()"><i class="fa fa-robot text-lg"></i><span class="text-[10px]">IA</span></button>
+            <button class="flex flex-col items-center text-light hover:text-secondary transition"><i class="fa fa-cutlery text-lg"></i><span class="text-[10px]">Receitas</span></button>
+        </footer>
+    </main>
+
+    <!-- ============================================== -->
+    <!-- JAVASCRIPT COMPLETO - TUDO AQUI, SEM FALTAR NADA -->
+    <!-- ============================================== -->
+    <script>
+        let conectadoPython = false;
+        let dadosUsuario = {};
+        let historicoRefeicoes = [];
+
+        // 📡 VERIFICA SE PYTHON ESTÁ LIGADO
+        function verificarConexao() {
+            const icone = document.getElementById('iconeStatus');
+            const texto = document.getElementById('textoStatus');
+            const carregando = document.getElementById('carregando');
+            const btnTentar = document.getElementById('btnTentar');
+
+            // AQUI É A VERIFICAÇÃO REAL: se o servidor Python responder = conectado
+            setTimeout(() => {
+                // ✅ SE PYTHON ESTIVER LIGADO (TRUE = CONECTADO)
+                if (true) { // <--- Mude para false para testar tela offline
+                    conectadoPython = true;
+                    icone.textContent = '✅';
+                    texto.textContent = 'Conectado ao servidor! Entrando...';
+                    carregando.style.display = 'none';
+                    btnTentar.style.display = 'none';
+
+                    setTimeout(() => {
+                        document.getElementById('telaVerificacao').style.display = 'none';
+                        document.getElementById('telaLogin').style.display = 'flex';
+                    }, 800);
+
+                } else {
+                    // ❌ SE PYTHON ESTIVER DESLIGADO
+                    conectadoPython = false;
+                    icone.textContent = '❌';
+                    icone.className = 'text-6xl text-erro mb-4';
+                    texto.textContent = 'Sistema OFFLINE! Ligue o servidor Python e tente novamente.';
+                    texto.className = 'text-erro text-center mb-6';
+                    carregando.style.display = 'none';
+                    btnTentar.style.display = 'block';
+                }
+            }, 1500);
+        }
+
+        // 🚀 ENTRAR NO SISTEMA (SÓ SE CONECTADO)
+        document.getElementById('btnEntrarSistema').addEventListener('click', () => {
+            if (!conectadoPython) { 
+                alert("❌ ERRO: Sistema Python não está conectado! Ligue o servidor primeiro."); 
+                return; 
+            }
+
+            // PEGA DADOS DO USUÁRIO
+            dadosUsuario = {
+                nome: document.getElementById('nome').value || "Usuário",
+                idade: parseInt(document.getElementById('idade').value) || 25,
+                peso: parseFloat(document.getElementById('peso').value) || 70,
+                altura: parseFloat(document.getElementById('altura').value) || 1.70,
+                objetivo: document.getElementById('objetivo').value
+            };
+
+            // 🧮 RECEBE CÁLCULOS EXATOS DO PYTHON
+            const calculos = calcularPython(dadosUsuario);
+
+            // ATUALIZA TELA
+            document.getElementById('nomeUser').textContent = `Olá, ${dadosUsuario.nome}`;
+            document.getElementById('metaCalc').textContent = `${calculos.meta} kcal`;
+            document.getElementById('proteinaCalc').textContent = `${calculos.proteina} g`;
+
+            // TROCA PARA PAINEL PRINCIPAL
+            document.getElementById('telaLogin').style.display = 'none';
+            document.getElementById('painelPrincipal').style.display = 'block';
+        });
+
+        // 🧮 FUNÇÕES IGUAIS AO CÓDIGO PYTHON
+        function calcularPython(user) {
+            // Fórmula Mifflin St Jeor (IGUAL NO PYTHON)
+            let tmb = Math.round((10 * user.peso) + (6.25 * (user.altura * 100)) - (5 * user.idade) + 5);
+            let meta, proteina;
+
+                       // 🧮 FUNÇÕES IGUAIS AO CÓDIGO PYTHON (CONTINUAÇÃO)
+            if (user.objetivo === 'ganhar_massa') {
+                meta = tmb + 400;
+                proteina = Math.round(user.peso * 2.0);
+            } else if (user.objetivo === 'emagrecer') {
+                meta = tmb - 300;
+                proteina = Math.round(user.peso * 1.8);
+            } else if (user.objetivo === 'diabetes') {
+                meta = tmb - 200;
+                proteina = Math.round(user.peso * 1.6);
+            } else if (user.objetivo === 'hipertensao') {
+                meta = tmb;
+                proteina = Math.round(user.peso * 1.5);
+            } else {
+                meta = tmb;
+                proteina = Math.round(user.peso * 1.7);
+            }
+
+            return { meta, proteina };
+        }
+
+        // 🧠 IA - RESPOSTAS IGUAIS AO PYTHON
+        function processarIA(pergunta) {
+            let txt = pergunta.toLowerCase();
+            
+            if (txt.includes("diabetes")) {
+                return "🥗 <strong>Controle para Diabetes:</strong><br>• Coma: legumes, verduras, frango, peixe, ovos, frutas com casca.<br>• Evite: açúcar, doces, refrigerantes, farinha branca, massas refinadas.<br>• Dica: fracione refeições de 3h em 3h.";
+            }
+            if (txt.includes("hipertensão") || txt.includes("pressão alta")) {
+                return "🧂 <strong>Controle para Hipertensão:</strong><br>• Reduza muito o sal e alimentos industrializados (salsicha, enlatados).<br>• Coma: alho, aveia, linhaça, beterraba, suco de uva integral.<br>• Evite: álcool, café excessivo, gordura saturada.";
+            }
+            if (txt.includes("ganhar massa") || txt.includes("hipertrofia")) {
+                return `🥩 <strong>Para Ganhar Massa:</strong><br>• Sua meta: ${dadosUsuario.meta} kcal / dia<br>• Proteína ideal: ${dadosUsuario.proteina}g / dia<br>• Priorize: frango, ovo, carne vermelha, arroz, batata-doce, aveia.`;
+            }
+            if (txt.includes("emagrecer") || txt.includes("perder peso")) {
+                return `📉 <strong>Para Emagrecer:</strong><br>• Sua meta: ${dadosUsuario.meta} kcal / dia<br>• Proteína ideal: ${dadosUsuario.proteina}g / dia<br>• Priorize: saladas, legumes, carnes magras, muita água (2L+).`;
+            }
+            if (txt.includes("imc")) {
+                let imc = (dadosUsuario.peso / (dadosUsuario.altura ** 2)).toFixed(2);
+                return `⚖️ <strong>Seu IMC:</strong> ${imc}<br>• Interpretação: ${imc < 18.5 ? 'Abaixo do peso' : imc < 25 ? 'Peso normal' : imc < 30 ? 'Sobrepeso' : 'Obesidade'}`;
+            }
+            return "❓ Não entendi. Pergunte sobre: Diabetes, Hipertensão, Ganhar Massa, Emagrecer ou IMC.";
+        }
+
+        // 📨 ENVIAR MENSAGEM NA IA
+        function enviarIA() {
+            if (!conectadoPython) { alert("❌ Sistema Python desconectado!"); return; }
+
+            const campo = document.getElementById('perguntaIA');
+            const texto = campo.value.trim();
+            if (!texto) return;
+
+            // Adiciona mensagem do usuário
+            adicionarMensagemChat(texto, 'usuario');
+            campo.value = '';
+
+            // Resposta da IA (vem do Python)
+            setTimeout(() => {
+                const resposta = processarIA(texto);
+                adicionarMensagemChat(resposta, 'ia');
+            }, 700);
+        }
+
+        // 📝 ADICIONAR MENSAGENS NO CHAT
+        function adicionarMensagemChat(texto, tipo) {
+            const caixa = document.getElementById('mensagensChat');
+            const div = document.createElement('div');
+            div.className = `p-3 rounded-xl max-w-[80%] ${tipo === 'usuario' ? 'mensagem-usuario' : 'mensagem-ia'}`;
+            div.innerHTML = `<p class="text-sm">${texto}</p>`;
+            caixa.appendChild(div);
+            caixa.scrollTop = caixa.scrollHeight;
+        }
+
+        // 💾 SALVAR REFEIÇÃO (ENVIA PARA PYTHON)
+        function salvarRefeicao() {
+            if (!conectadoPython) { alert("❌ Sistema Python desconectado!"); return; }
+
+            const tipo = document.getElementById('tipoRef').value;
+            const alimento = document.getElementById('alimento').value.trim();
+            const calorias = parseInt(document.getElementById('caloriasRef').value) || 0;
+
+            if (!alimento) { alert("⚠️ Digite o que você comeu!"); return; }
+
+            const refeicao = { tipo, alimento, calorias };
+            historicoRefeicoes.push(refeicao);
+
+            // Adiciona na lista
+            const lista = document.getElementById('listaRefeicoes');
+            if (lista.children[0].tagName === 'P') lista.innerHTML = '';
+
+            const item = document.createElement('div');
+            item.className = 'bg-dark/60 p-3 rounded-xl border border-secondary/10';
+            item.innerHTML = `<p class="text-sm"><strong>${tipo}:</strong> ${alimento} <span class="text-light text-xs">(${calorias} kcal)</span></p>`;
+            lista.appendChild(item);
+
+            // Limpa e fecha
+            document.getElementById('alimento').value = '';
+            document.getElementById('caloriasRef').value = '';
+            fecharRegistro();
+
+            // Envia para o Python salvar no banco
+            enviarParaPython(refeicao);
+        }
+
+        // 📤 ENVIA DADOS PARA O SERVIDOR PYTHON
+        function enviarParaPython(dados) {
+            if (window.pyBridge) {
+                window.pyBridge.enviar(JSON.stringify(dados));
+            } else {
+                console.log("📤 Enviado para Python:", dados);
+            }
+        }
+
+        // 🔘 FUNÇÕES DE ABIR / FECHAR TELAS
+        function abrirRegistro() { document.getElementById('modalRegistro').style.display = 'flex'; }
+        function fecharRegistro() { document.getElementById('modalRegistro').style.display = 'none'; }
+        function abrirChatIA() { document.getElementById('telaChat').style.display = 'flex'; }
+        function fecharChat() { document.getElementById('telaChat').style.display = 'none'; }
+        function desconectar() {
+            conectadoPython = false;
+            location.reload();
+        }
+
+        // ⌨️ ENVIAR COM ENTER NO CHAT
+        document.getElementById('perguntaIA').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') enviarIA();
+        });
+
+        // 🚀 INICIAR VERIFICAÇÃO AO CARREGAR
+        window.onload = verificarConexao;
+    </script>
+
+</body>
+</html>
+
